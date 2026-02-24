@@ -28,7 +28,7 @@ func ListProjects(db *sql.DB) http.HandlerFunc {
 		}
 
 		rows, err := db.Query(`
-			SELECT id, user_id, name, created_at
+			SELECT id, user_id, name, active_deployment_id, created_at
 			FROM projects WHERE user_id = $1
 			ORDER BY created_at DESC
 		`, userID)
@@ -41,7 +41,7 @@ func ListProjects(db *sql.DB) http.HandlerFunc {
 		var projects []models.Project
 		for rows.Next() {
 			var p models.Project
-			if err := rows.Scan(&p.ID, &p.UserID, &p.Name, &p.CreatedAt); err != nil {
+			if err := rows.Scan(&p.ID, &p.UserID, &p.Name, &p.ActiveDeploymentID, &p.CreatedAt); err != nil {
 				continue
 			}
 			projects = append(projects, p)
@@ -131,9 +131,9 @@ func GetProject(db *sql.DB) http.HandlerFunc {
 
 		var project models.Project
 		err = db.QueryRow(`
-			SELECT id, user_id, name, created_at
+			SELECT id, user_id, name, active_deployment_id, created_at
 			FROM projects WHERE id = $1 AND user_id = $2
-		`, projectID, userID).Scan(&project.ID, &project.UserID, &project.Name, &project.CreatedAt)
+		`, projectID, userID).Scan(&project.ID, &project.UserID, &project.Name, &project.ActiveDeploymentID, &project.CreatedAt)
 
 		if err == sql.ErrNoRows {
 			respondError(w, "Project not found", http.StatusNotFound)
