@@ -1,4 +1,4 @@
-# Deployer / DeployNet 🚀
+# Deployer 🚀
 
 Self-hosted tooling for deploying static sites (Next.js, Vite, CRA, etc.) to your homelab or cluster via a simple CLI.
 
