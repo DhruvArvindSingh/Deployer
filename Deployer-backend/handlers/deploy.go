@@ -1,12 +1,15 @@
 package handlers
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
 	"path/filepath"
+	"strings"
+	"io"
 
 	"github.com/dhruvsingh/deployer-backend/config"
 	"github.com/dhruvsingh/deployer-backend/middleware"
@@ -48,7 +51,6 @@ func DeployProject(db *sql.DB, minioClient *minio.Client, cfg *config.Config) ht
 		err = db.QueryRow("SELECT id FROM projects WHERE name = $1 AND user_id = $2", projectName, userID).Scan(&projectID)
 
 		if err == sql.ErrNoRows {
-			// Create new project
 			err = db.QueryRow(`
 				INSERT INTO projects (user_id, name)
 				VALUES ($1, $2)
@@ -106,7 +108,6 @@ func DeployProject(db *sql.DB, minioClient *minio.Client, cfg *config.Config) ht
 				return
 			}
 
-			// Set bucket policy to public (download)
 			policy := fmt.Sprintf(`{
 				"Version": "2012-10-17",
 				"Statement": [{
@@ -145,16 +146,17 @@ func DeployProject(db *sql.DB, minioClient *minio.Client, cfg *config.Config) ht
 				contentType = getContentType(objectName)
 			}
 
-			log.Printf("📤 Uploading %s (v%d) Content-Type: %s", objectName, nextVersion, contentType)
-
 			// Read file content into memory for dual upload
-			fileBytes := make([]byte, fileHeader.Size)
-			file.Read(fileBytes)
+			fileBytes, err := io.ReadAll(file)
 			file.Close()
+			if err != nil {
+				log.Printf("Failed to read file %s: %v", objectName, err)
+				continue
+			}
 
 			// Upload to root (live serving)
 			_, err = minioClient.PutObject(ctx, projectName, objectName,
-				newReaderFromBytes(fileBytes), fileHeader.Size,
+				bytes.NewReader(fileBytes), int64(len(fileBytes)),
 				minio.PutObjectOptions{ContentType: contentType})
 			if err != nil {
 				log.Printf("Failed to upload %s to root: %v", objectName, err)
@@ -163,14 +165,14 @@ func DeployProject(db *sql.DB, minioClient *minio.Client, cfg *config.Config) ht
 
 			// Upload to versioned path (_deployments/{deployment-id}/...)
 			_, err = minioClient.PutObject(ctx, projectName, versionPrefix+objectName,
-				newReaderFromBytes(fileBytes), fileHeader.Size,
+				bytes.NewReader(fileBytes), int64(len(fileBytes)),
 				minio.PutObjectOptions{ContentType: contentType})
 			if err != nil {
 				log.Printf("Failed to upload %s to version store: %v", objectName, err)
 			}
 
 			filesCount++
-			totalSize += fileHeader.Size
+			totalSize += int64(len(fileBytes))
 		}
 
 		// Update deployment record
@@ -219,7 +221,6 @@ func RollbackDeployment(db *sql.DB, minioClient *minio.Client, cfg *config.Confi
 		projectID := vars["id"]
 		deploymentID := vars["deploymentId"]
 
-		// Get user ID
 		var userID string
 		err := db.QueryRow("SELECT id FROM users WHERE email = $1", user.Email).Scan(&userID)
 		if err != nil {
@@ -227,7 +228,6 @@ func RollbackDeployment(db *sql.DB, minioClient *minio.Client, cfg *config.Confi
 			return
 		}
 
-		// Verify project ownership and get project name
 		var projectName string
 		err = db.QueryRow(`
 			SELECT name FROM projects WHERE id = $1 AND user_id = $2
@@ -240,7 +240,6 @@ func RollbackDeployment(db *sql.DB, minioClient *minio.Client, cfg *config.Confi
 			return
 		}
 
-		// Verify deployment belongs to this project and is successful
 		var deployVersion int
 		err = db.QueryRow(`
 			SELECT version FROM deployments
@@ -265,8 +264,7 @@ func RollbackDeployment(db *sql.DB, minioClient *minio.Client, cfg *config.Confi
 			if obj.Err != nil {
 				continue
 			}
-			// Skip versioned storage
-			if len(obj.Key) > 13 && obj.Key[:13] == "_deployments/" {
+			if strings.HasPrefix(obj.Key, "_deployments/") {
 				continue
 			}
 			minioClient.RemoveObject(ctx, projectName, obj.Key, minio.RemoveObjectOptions{})
@@ -285,10 +283,8 @@ func RollbackDeployment(db *sql.DB, minioClient *minio.Client, cfg *config.Confi
 				continue
 			}
 
-			// Strip the version prefix to get the original path
 			originalPath := obj.Key[len(versionPrefix):]
 
-			// Copy from versioned path to root
 			_, err := minioClient.CopyObject(ctx,
 				minio.CopyDestOptions{Bucket: projectName, Object: originalPath},
 				minio.CopySrcOptions{Bucket: projectName, Object: obj.Key},
@@ -334,7 +330,6 @@ func ListProjectDeployments(db *sql.DB) http.HandlerFunc {
 		vars := mux.Vars(r)
 		projectID := vars["id"]
 
-		// Get user ID
 		var userID string
 		err := db.QueryRow("SELECT id FROM users WHERE email = $1", user.Email).Scan(&userID)
 		if err != nil {
@@ -342,7 +337,6 @@ func ListProjectDeployments(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		// Verify project ownership and get active deployment
 		var activeDeploymentID sql.NullString
 		err = db.QueryRow(`
 			SELECT active_deployment_id FROM projects WHERE id = $1 AND user_id = $2
@@ -355,7 +349,6 @@ func ListProjectDeployments(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		// Get all deployments
 		rows, err := db.Query(`
 			SELECT id, project_id, version, status, files_count, size_bytes, logs, created_at
 			FROM deployments
@@ -375,7 +368,6 @@ func ListProjectDeployments(db *sql.DB) http.HandlerFunc {
 				&d.FilesCount, &d.SizeBytes, &d.Logs, &d.CreatedAt); err != nil {
 				continue
 			}
-			// Mark active deployment
 			if activeDeploymentID.Valid && d.ID == activeDeploymentID.String {
 				d.IsActive = true
 			}
@@ -472,7 +464,6 @@ func updateDeploymentStatus(db *sql.DB, deploymentID, status, logs string) {
 
 func getContentType(filename string) string {
 	ext := filepath.Ext(filename)
-	log.Printf("🔍 getContentType: filename=%s, ext=%s", filename, ext)
 	contentTypes := map[string]string{
 		".html": "text/html",
 		".css":  "text/css",
@@ -488,29 +479,16 @@ func getContentType(filename string) string {
 		".woff2": "font/woff2",
 		".ttf":  "font/ttf",
 		".pdf":  "application/pdf",
+		".xml":  "application/xml",
+		".txt":  "text/plain",
+		".map":  "application/json",
+		".webp": "image/webp",
+		".mp4":  "video/mp4",
+		".glb":  "model/gltf-binary",
 	}
 
 	if ct, ok := contentTypes[ext]; ok {
 		return ct
 	}
 	return "application/octet-stream"
-}
-
-// Helper to create a reader from bytes (for dual upload)
-type bytesReader struct {
-	data []byte
-	pos  int
-}
-
-func newReaderFromBytes(data []byte) *bytesReader {
-	return &bytesReader{data: data, pos: 0}
-}
-
-func (r *bytesReader) Read(p []byte) (n int, err error) {
-	if r.pos >= len(r.data) {
-		return 0, fmt.Errorf("EOF")
-	}
-	n = copy(p, r.data[r.pos:])
-	r.pos += n
-	return n, nil
 }
