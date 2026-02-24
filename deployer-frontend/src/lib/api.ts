@@ -83,10 +83,12 @@ export interface Project {
 export interface Deployment {
   id: string;
   project_id: string;
+  version: number;
   status: string;
   files_count: number;
   size_bytes: number;
   logs?: string;
+  is_active: boolean;
   created_at: string;
 }
 
@@ -104,7 +106,14 @@ export async function handleOAuthCallback(
   provider: string,
   code: string
 ): Promise<{ token: string; email: string }> {
-  return apiFetch(`/api/auth/${provider}/callback?code=${code}`);
+  // Pass source=web and redirect_uri so the backend uses the correct OAuth credentials
+  const redirectUri = `${window.location.origin}/auth/callback`;
+  const params = new URLSearchParams({
+    code,
+    source: "web",
+    redirect_uri: redirectUri,
+  });
+  return apiFetch(`/api/auth/${provider}/callback?${params.toString()}`);
 }
 
 // Projects

@@ -76,6 +76,8 @@ func main() {
 	api.HandleFunc("/projects", handlers.ListProjects(db)).Methods("GET")
 	api.HandleFunc("/projects/{id}", handlers.GetProject(db)).Methods("GET")
 	api.HandleFunc("/projects/{id}", handlers.DeleteProject(db, minioClient)).Methods("DELETE")
+	api.HandleFunc("/projects/{id}/deployments", handlers.ListProjectDeployments(db)).Methods("GET")
+	api.HandleFunc("/projects/{id}/rollback/{deploymentId}", handlers.RollbackDeployment(db, minioClient, cfg)).Methods("POST")
 	api.HandleFunc("/deployments/{id}", handlers.GetDeploymentStatus(db)).Methods("GET")
 	api.HandleFunc("/deployments/{id}/logs", handlers.GetDeploymentLogs(db)).Methods("GET")
 
@@ -85,6 +87,7 @@ func main() {
 			"http://localhost:3000",
 			"https://deployer-cli.dsingh.fun",
 			cfg.AuthPageURL,
+			cfg.FrontendURL,
 		},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"*"},

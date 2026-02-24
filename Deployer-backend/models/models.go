@@ -12,20 +12,23 @@ type User struct {
 }
 
 type Project struct {
-	ID        string    `json:"id"`
-	UserID    string    `json:"user_id"`
-	Name      string    `json:"name"`
-	CreatedAt time.Time `json:"created_at"`
-	URL       string    `json:"url,omitempty"`
+	ID                 string    `json:"id"`
+	UserID             string    `json:"user_id"`
+	Name               string    `json:"name"`
+	ActiveDeploymentID *string   `json:"active_deployment_id"`
+	CreatedAt          time.Time `json:"created_at"`
+	URL                string    `json:"url,omitempty"`
 }
 
 type Deployment struct {
 	ID         string    `json:"id"`
 	ProjectID  string    `json:"project_id"`
+	Version    int       `json:"version"`
 	Status     string    `json:"status"`
 	FilesCount int       `json:"files_count"`
 	SizeBytes  int64     `json:"size_bytes"`
-	Logs       string    `json:"logs,omitempty"`
+	Logs       *string   `json:"logs,omitempty"`
+	IsActive   bool      `json:"is_active"`
 	CreatedAt  time.Time `json:"created_at"`
 }
 

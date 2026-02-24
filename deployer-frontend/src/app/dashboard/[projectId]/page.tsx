@@ -29,6 +29,8 @@ import {
   ChevronUp,
   Rocket,
   AlertTriangle,
+  Hash,
+  CheckCircle2,
 } from "lucide-react";
 
 export default function ProjectDetailPage() {
@@ -43,6 +45,7 @@ export default function ProjectDetailPage() {
   const [expandedDeploy, setExpandedDeploy] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [rollbackConfirm, setRollbackConfirm] = useState<string | null>(null);
+  const [rollingBack, setRollingBack] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -62,11 +65,14 @@ export default function ProjectDetailPage() {
       const projectData = await getProject(projectId);
       setProject(projectData);
 
-      // Load deployments via API
+      // Load deployments
       const token = localStorage.getItem("deploynet_token");
-      const res = await fetch(`${API_BASE}/api/projects/${projectId}/deployments`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(
+        `${API_BASE}/api/projects/${projectId}/deployments`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       if (res.ok) {
         const deps = await res.json();
         setDeployments(deps || []);
@@ -86,9 +92,31 @@ export default function ProjectDetailPage() {
   }
 
   async function handleRollback(deploymentId: string) {
-    // TODO: Implement rollback API
-    alert(`Rollback to deployment ${deploymentId} — API endpoint needed`);
-    setRollbackConfirm(null);
+    setRollingBack(true);
+    try {
+      const token = localStorage.getItem("deploynet_token");
+      const res = await fetch(
+        `${API_BASE}/api/projects/${projectId}/rollback/${deploymentId}`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (res.ok) {
+        // Reload project data to reflect the new active deployment
+        await loadProjectData();
+        setRollbackConfirm(null);
+      } else {
+        const error = await res.json();
+        alert(`Rollback failed: ${error.error}`);
+      }
+    } catch (err) {
+      console.error("Rollback failed:", err);
+      alert("Rollback failed. Check console for details.");
+    } finally {
+      setRollingBack(false);
+    }
   }
 
   if (authLoading || loading) {
@@ -113,6 +141,8 @@ export default function ProjectDetailPage() {
       </div>
     );
   }
+
+  const activeDeployment = deployments.find((d) => d.is_active);
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
@@ -156,10 +186,12 @@ export default function ProjectDetailPage() {
               </div>
             </div>
           </div>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 text-xs font-medium">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            Production
-          </span>
+          {activeDeployment && (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 text-xs font-medium">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              v{activeDeployment.version} Live
+            </span>
+          )}
         </div>
 
         {/* Stats */}
@@ -175,14 +207,14 @@ export default function ProjectDetailPage() {
             </p>
           </div>
           <div>
-            <p className="text-xs text-gray-500 mb-1">Deployments</p>
+            <p className="text-xs text-gray-500 mb-1">Versions</p>
             <p className="text-sm font-medium">{deployments.length}</p>
           </div>
           <div>
-            <p className="text-xs text-gray-500 mb-1">Method</p>
+            <p className="text-xs text-gray-500 mb-1">Active Version</p>
             <p className="text-sm font-medium flex items-center gap-1">
-              <Terminal className="w-3.5 h-3.5 text-gray-400" />
-              CLI
+              <Hash className="w-3.5 h-3.5 text-violet-400" />
+              {activeDeployment ? `v${activeDeployment.version}` : "—"}
             </p>
           </div>
         </div>
@@ -194,16 +226,19 @@ export default function ProjectDetailPage() {
           <Rocket className="w-5 h-5 text-violet-400" />
           Deployment History
         </h2>
+        <p className="text-xs text-gray-500 mt-1">
+          Click any previous version to rollback
+        </p>
       </div>
 
       {deployments.length > 0 ? (
         <div className="space-y-3">
-          {deployments.map((deploy, index) => (
+          {deployments.map((deploy) => (
             <div
               key={deploy.id}
               className={cn(
                 "rounded-xl glass transition-all",
-                index === 0 && "glow-sm"
+                deploy.is_active && "glow-sm border-emerald-500/20"
               )}
             >
               <div
@@ -224,7 +259,7 @@ export default function ProjectDetailPage() {
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium">
-                        {index === 0 ? "Current" : `v${deployments.length - index}`}
+                        v{deploy.version}
                       </span>
                       <span
                         className={cn(
@@ -238,26 +273,53 @@ export default function ProjectDetailPage() {
                       >
                         {deploy.status}
                       </span>
+                      {deploy.is_active && (
+                        <span className="flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded bg-violet-500/10 text-violet-400">
+                          <CheckCircle2 className="w-3 h-3" />
+                          Active
+                        </span>
+                      )}
                     </div>
-                    <span className="text-xs text-gray-500">
-                      {timeAgo(deploy.created_at)}
-                    </span>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-xs text-gray-500">
+                        {timeAgo(deploy.created_at)}
+                      </span>
+                      <span className="text-xs text-gray-600">•</span>
+                      <span className="text-xs text-gray-500">
+                        {deploy.files_count} files
+                      </span>
+                      <span className="text-xs text-gray-600">•</span>
+                      <span className="text-xs text-gray-500">
+                        {formatBytes(deploy.size_bytes)}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
-                  {index > 0 && deploy.status === "success" && (
+                  {!deploy.is_active && deploy.status === "success" && (
                     <>
                       {rollbackConfirm === deploy.id ? (
-                        <div className="flex items-center gap-2 animate-fade-in">
+                        <div
+                          className="flex items-center gap-2 animate-fade-in"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               handleRollback(deploy.id);
                             }}
-                            className="px-3 py-1.5 rounded-lg bg-yellow-500/10 text-yellow-400 text-xs font-medium hover:bg-yellow-500/20 transition-all"
+                            disabled={rollingBack}
+                            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-yellow-500/10 text-yellow-400 text-xs font-medium hover:bg-yellow-500/20 transition-all disabled:opacity-50"
                           >
-                            Confirm Rollback
+                            {rollingBack ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <RotateCcw className="w-3 h-3" />
+                            )}
+                            {rollingBack
+                              ? "Rolling back..."
+                              : `Deploy v${deploy.version}`}
                           </button>
                           <button
                             onClick={(e) => {
@@ -276,7 +338,7 @@ export default function ProjectDetailPage() {
                             setRollbackConfirm(deploy.id);
                           }}
                           className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs text-gray-500 hover:text-yellow-400 hover:bg-yellow-500/5 transition-all"
-                          title="Rollback to this version"
+                          title={`Rollback to v${deploy.version}`}
                         >
                           <RotateCcw className="w-3.5 h-3.5" />
                           Rollback
@@ -295,6 +357,13 @@ export default function ProjectDetailPage() {
               {expandedDeploy === deploy.id && (
                 <div className="px-4 pb-4 pt-0 animate-slide-down">
                   <div className="rounded-lg bg-black/30 p-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div>
+                      <div className="flex items-center gap-1 text-xs text-gray-500 mb-1">
+                        <Hash className="w-3 h-3" />
+                        Version
+                      </div>
+                      <p className="text-sm font-medium">v{deploy.version}</p>
+                    </div>
                     <div>
                       <div className="flex items-center gap-1 text-xs text-gray-500 mb-1">
                         <FileText className="w-3 h-3" />
@@ -322,13 +391,14 @@ export default function ProjectDetailPage() {
                         {formatDate(deploy.created_at)}
                       </p>
                     </div>
-                    <div>
-                      <div className="flex items-center gap-1 text-xs text-gray-500 mb-1">
-                        <Terminal className="w-3 h-3" />
-                        Method
-                      </div>
-                      <p className="text-sm font-medium">CLI</p>
+                  </div>
+
+                  <div className="mt-3 rounded-lg bg-black/30 p-4">
+                    <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
+                      <Terminal className="w-3 h-3" />
+                      Method
                     </div>
+                    <p className="text-sm font-medium">CLI Deploy</p>
                   </div>
 
                   {deploy.logs && (
