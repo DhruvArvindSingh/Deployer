@@ -30,7 +30,7 @@ type Deployment struct {
 }
 
 type JWTClaims struct {
-	UserID   string `json:"userId"`
+	UserID   string `json:"user_id"`
 	Email    string `json:"email"`
 	Provider string `json:"provider"`
 	Username string `json:"username"`

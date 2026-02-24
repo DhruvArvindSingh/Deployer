@@ -50,7 +50,7 @@ func RequireAuth(cfg *config.Config, next http.HandlerFunc) http.HandlerFunc {
 
 		// Extract user info
 		user := &models.JWTClaims{
-			UserID:   getString(claims, "userId"),
+			UserID:   getString(claims, "user_id"),
 			Email:    getString(claims, "email"),
 			Provider: getString(claims, "provider"),
 			Username: getString(claims, "username"),
