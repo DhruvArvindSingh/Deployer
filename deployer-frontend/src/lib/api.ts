@@ -76,6 +76,7 @@ export interface Project {
   id: string;
   user_id: string;
   name: string;
+  repo_url?: string;
   created_at: string;
   url?: string;
 }
@@ -85,6 +86,9 @@ export interface Deployment {
   project_id: string;
   version: number;
   status: string;
+  source: string;
+  commit_hash?: string;
+  commit_message?: string;
   files_count: number;
   size_bytes: number;
   logs?: string;

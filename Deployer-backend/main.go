@@ -67,6 +67,9 @@ func main() {
 	r.HandleFunc("/api/auth/github/callback", handlers.GitHubCallbackHandler(db, cfg)).Methods("GET")
 	r.HandleFunc("/api/auth/google/callback", handlers.GoogleCallbackHandler(db, cfg)).Methods("GET")
 
+	// CLI download (public)
+	r.HandleFunc("/api/cli/latest", handlers.ServeLatestCLI()).Methods("GET")
+
 	// Protected routes
 	api := r.PathPrefix("/api").Subrouter()
 	api.Use(middleware.AuthMiddleware(cfg.JWTSecret, db))

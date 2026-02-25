@@ -69,6 +69,63 @@ func RunMigrations(db *sql.DB) error {
 				ALTER TABLE deployments ADD COLUMN version INTEGER NOT NULL DEFAULT 1;
 			END IF;
 		END $$`,
+
+		// Migration: add repo_url to projects
+		`DO $$
+		BEGIN
+			IF NOT EXISTS (
+				SELECT 1 FROM information_schema.columns
+				WHERE table_name = 'projects' AND column_name = 'repo_url'
+			) THEN
+				ALTER TABLE projects ADD COLUMN repo_url TEXT;
+			END IF;
+		END $$`,
+
+		// Migration: add source, commit_hash, commit_message to deployments
+		`DO $$
+		BEGIN
+			IF NOT EXISTS (
+				SELECT 1 FROM information_schema.columns
+				WHERE table_name = 'deployments' AND column_name = 'source'
+			) THEN
+				ALTER TABLE deployments ADD COLUMN source VARCHAR(20) DEFAULT 'cli';
+			END IF;
+			IF NOT EXISTS (
+				SELECT 1 FROM information_schema.columns
+				WHERE table_name = 'deployments' AND column_name = 'commit_hash'
+			) THEN
+				ALTER TABLE deployments ADD COLUMN commit_hash VARCHAR(64);
+			END IF;
+			IF NOT EXISTS (
+				SELECT 1 FROM information_schema.columns
+				WHERE table_name = 'deployments' AND column_name = 'commit_message'
+			) THEN
+				ALTER TABLE deployments ADD COLUMN commit_message TEXT;
+			END IF;
+		END $$`,
+		// Migration: add repo_url to projects
+		`DO $$
+		BEGIN
+			IF NOT EXISTS (
+				SELECT 1 FROM information_schema.columns
+				WHERE table_name = 'projects' AND column_name = 'repo_url'
+			) THEN
+				ALTER TABLE projects ADD COLUMN repo_url TEXT;
+			END IF;
+		END $$`,
+
+		// Migration: add source and commit info to deployments
+		`DO $$
+		BEGIN
+			IF NOT EXISTS (
+				SELECT 1 FROM information_schema.columns
+				WHERE table_name = 'deployments' AND column_name = 'source'
+			) THEN
+				ALTER TABLE deployments ADD COLUMN source VARCHAR(50) DEFAULT 'cli';
+				ALTER TABLE deployments ADD COLUMN commit_hash VARCHAR(100);
+				ALTER TABLE deployments ADD COLUMN commit_message TEXT;
+			END IF;
+		END $$`,
 	}
 
 	for _, migration := range migrations {
