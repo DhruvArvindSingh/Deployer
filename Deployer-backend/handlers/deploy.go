@@ -38,6 +38,14 @@ func DeployProject(db *sql.DB, minioClient *minio.Client, cfg *config.Config) ht
 			return
 		}
 
+		repoURL := r.FormValue("repo_url")
+		source := r.FormValue("source")
+		if source == "" {
+			source = "cli"
+		}
+		commitHash := r.FormValue("commit_hash")
+		commitMsg := r.FormValue("commit_message")
+
 		// Get user ID
 		var userID string
 		err := db.QueryRow("SELECT id FROM users WHERE email = $1", user.Email).Scan(&userID)
@@ -52,10 +60,10 @@ func DeployProject(db *sql.DB, minioClient *minio.Client, cfg *config.Config) ht
 
 		if err == sql.ErrNoRows {
 			err = db.QueryRow(`
-				INSERT INTO projects (user_id, name)
-				VALUES ($1, $2)
+				INSERT INTO projects (user_id, name, repo_url)
+				VALUES ($1, $2, $3)
 				RETURNING id
-			`, userID, projectName).Scan(&projectID)
+			`, userID, projectName, sql.NullString{String: repoURL, Valid: repoURL != ""}).Scan(&projectID)
 
 			if err != nil {
 				respondError(w, "Failed to create project", http.StatusInternalServerError)
@@ -64,6 +72,9 @@ func DeployProject(db *sql.DB, minioClient *minio.Client, cfg *config.Config) ht
 		} else if err != nil {
 			respondError(w, "Database error", http.StatusInternalServerError)
 			return
+		} else if repoURL != "" {
+			// Update repo_url if provided for existing project
+			_, _ = db.Exec("UPDATE projects SET repo_url = $1 WHERE id = $2", repoURL, projectID)
 		}
 
 		// Calculate next version number
@@ -79,10 +90,12 @@ func DeployProject(db *sql.DB, minioClient *minio.Client, cfg *config.Config) ht
 		// Create deployment record
 		var deploymentID string
 		err = db.QueryRow(`
-			INSERT INTO deployments (project_id, status, version)
-			VALUES ($1, 'uploading', $2)
+			INSERT INTO deployments (project_id, status, version, source, commit_hash, commit_message)
+			VALUES ($1, 'uploading', $2, $3, $4, $5)
 			RETURNING id
-		`, projectID, nextVersion).Scan(&deploymentID)
+		`, projectID, nextVersion, source, 
+			sql.NullString{String: commitHash, Valid: commitHash != ""},
+			sql.NullString{String: commitMsg, Valid: commitMsg != ""}).Scan(&deploymentID)
 
 		if err != nil {
 			respondError(w, "Failed to create deployment", http.StatusInternalServerError)
@@ -440,7 +453,7 @@ func ListProjectDeployments(db *sql.DB) http.HandlerFunc {
 		}
 
 		rows, err := db.Query(`
-			SELECT id, project_id, version, status, files_count, size_bytes, logs, created_at
+			SELECT id, project_id, version, status, source, commit_hash, commit_message, files_count, size_bytes, logs, created_at
 			FROM deployments
 			WHERE project_id = $1
 			ORDER BY version DESC
@@ -454,9 +467,16 @@ func ListProjectDeployments(db *sql.DB) http.HandlerFunc {
 		var deployments []models.Deployment
 		for rows.Next() {
 			var d models.Deployment
-			if err := rows.Scan(&d.ID, &d.ProjectID, &d.Version, &d.Status,
+			var commitHash, commitMsg sql.NullString
+			if err := rows.Scan(&d.ID, &d.ProjectID, &d.Version, &d.Status, &d.Source, &commitHash, &commitMsg,
 				&d.FilesCount, &d.SizeBytes, &d.Logs, &d.CreatedAt); err != nil {
 				continue
+			}
+			if commitHash.Valid {
+				d.CommitHash = &commitHash.String
+			}
+			if commitMsg.Valid {
+				d.CommitMessage = &commitMsg.String
 			}
 			if activeDeploymentID.Valid && d.ID == activeDeploymentID.String {
 				d.IsActive = true
@@ -480,14 +500,15 @@ func GetDeploymentStatus(db *sql.DB) http.HandlerFunc {
 		deploymentID := vars["id"]
 
 		var deployment models.Deployment
+		var commitHash, commitMsg sql.NullString
 		err := db.QueryRow(`
-			SELECT d.id, d.project_id, d.version, d.status, d.files_count, d.size_bytes, d.logs, d.created_at
+			SELECT d.id, d.project_id, d.version, d.status, d.source, d.commit_hash, d.commit_message, d.files_count, d.size_bytes, d.logs, d.created_at
 			FROM deployments d
 			JOIN projects p ON d.project_id = p.id
 			JOIN users u ON p.user_id = u.id
 			WHERE d.id = $1 AND u.email = $2
 		`, deploymentID, user.Email).Scan(
-			&deployment.ID, &deployment.ProjectID, &deployment.Version, &deployment.Status,
+			&deployment.ID, &deployment.ProjectID, &deployment.Version, &deployment.Status, &deployment.Source, &commitHash, &commitMsg,
 			&deployment.FilesCount, &deployment.SizeBytes, &deployment.Logs, &deployment.CreatedAt,
 		)
 
@@ -497,6 +518,13 @@ func GetDeploymentStatus(db *sql.DB) http.HandlerFunc {
 		} else if err != nil {
 			respondError(w, "Database error", http.StatusInternalServerError)
 			return
+		}
+
+		if commitHash.Valid {
+			deployment.CommitHash = &commitHash.String
+		}
+		if commitMsg.Valid {
+			deployment.CommitMessage = &commitMsg.String
 		}
 
 		respondJSON(w, deployment, http.StatusOK)

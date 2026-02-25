@@ -21,7 +21,6 @@ import {
   HardDrive,
   Loader2,
   RotateCcw,
-  Terminal,
   Copy,
   Check,
   ChevronDown,
@@ -30,6 +29,10 @@ import {
   AlertTriangle,
   Hash,
   CheckCircle2,
+  Github,
+  Cpu,
+  User,
+  GitCommit,
 } from "lucide-react";
 
 export default function ProjectDetailPage() {
@@ -164,7 +167,7 @@ export default function ProjectDetailPage() {
             </div>
             <div>
               <h1 className="text-4xl md:text-5xl font-black uppercase tracking-wide mb-2 drop-shadow-[0_0_10px_rgba(0,229,255,0.2)]">{project.name}</h1>
-              <div className="flex items-center gap-4">
+              <div className="flex flex-wrap items-center gap-4">
                 <a
                   href={getProjectUrl(project.name)}
                   target="_blank"
@@ -173,6 +176,16 @@ export default function ProjectDetailPage() {
                   <ExternalLink className="w-4 h-4" />
                   {project.name}.dsingh.fun
                 </a>
+                {project.repo_url && (
+                  <a
+                    href={project.repo_url}
+                    target="_blank"
+                    className="flex items-center gap-2 text-sm text-gray-400 font-bold tracking-widest hover:text-white transition-colors"
+                  >
+                    <Github className="w-4 h-4" />
+                    REPOSITORY
+                  </a>
+                )}
                 <button
                   onClick={copyUrl}
                   className="p-2 rounded-sm bg-white/5 border border-white/10 hover:bg-white/10 transition-all font-bold tracking-widest text-xs flex items-center gap-2"
@@ -386,12 +399,36 @@ export default function ProjectDetailPage() {
                     </div>
                   </div>
 
-                  <div className="mt-4 bg-[#111] border border-[#222] p-6 rounded-sm">
-                    <div className="flex items-center gap-2 text-xs text-gray-500 font-bold uppercase tracking-widest mb-2">
-                      <Terminal className="w-4 h-4" />
-                      METHOD
+                  <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="bg-[#111] border border-[#222] p-6 rounded-sm">
+                      <div className="flex items-center gap-2 text-xs text-gray-500 font-bold uppercase tracking-widest mb-2">
+                        {deploy.source === "ci" ? (
+                          <Cpu className="w-4 h-4" />
+                        ) : (
+                          <User className="w-4 h-4" />
+                        )}
+                        SOURCE
+                      </div>
+                      <p className="text-lg font-black uppercase">
+                        {deploy.source === "ci" ? "GitHub Actions" : "CLI Manual"}
+                      </p>
                     </div>
-                    <p className="text-lg font-black uppercase">CLI DEPLOY</p>
+                    {deploy.commit_hash && (
+                      <div className="bg-[#111] border border-[#222] p-6 rounded-sm">
+                        <div className="flex items-center gap-2 text-xs text-gray-500 font-bold uppercase tracking-widest mb-2">
+                          <GitCommit className="w-4 h-4" />
+                          COMMIT
+                        </div>
+                        <div className="flex flex-col">
+                          <p className="text-sm font-black text-[#00e5ff] font-mono uppercase">
+                            {deploy.commit_hash.substring(0, 7)}
+                          </p>
+                          <p className="text-xs text-gray-400 font-bold line-clamp-1">
+                            {deploy.commit_message || "No commit message"}
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {deploy.logs && (
