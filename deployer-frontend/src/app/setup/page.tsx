@@ -146,19 +146,35 @@ export default function SetupPage() {
           <Step
             number={1}
             title="INSTALL THE CLI"
-            description="QUICK INSTALL WITH A ONE-LINER OR BUILD FROM SOURCE."
+            description="QUICK INSTALL FROM GITHUB OR BUILD FROM SOURCE."
             icon={Download}
           >
             <div className="space-y-6">
               <div>
-                <p className="text-[10px] text-[#00e5ff] font-black tracking-[0.2em] mb-4">OPTION A: QUICK INSTALL (LINUX/MAC)</p>
+                <p className="text-[10px] text-[#00e5ff] font-black tracking-[0.2em] mb-4">OPTION A: QUICK INSTALL (GITHUB DIRECT)</p>
                 <CodeBlock
-                  code={`curl -sL https://deployer-be.dsingh.fun/install.sh | bash`}
+                  code={`curl -sL https://raw.githubusercontent.com/DhruvArvindSingh/Deployer/master/deployer-frontend/public/install.sh | bash`}
                 />
+                <p className="mt-2 text-[10px] text-gray-500 font-bold tracking-widest uppercase">
+                  This script automatically detects your OS/Arch and downloads the latest binary from GitHub Releases.
+                </p>
               </div>
 
               <div>
-                <p className="text-[10px] text-gray-500 font-black tracking-[0.2em] mb-4">OPTION B: BUILD FROM SOURCE</p>
+                <p className="text-[10px] text-gray-500 font-black tracking-[0.2em] mb-4">OPTION B: DOWNLOAD BINARY MANUALLY</p>
+                <div className="flex flex-wrap gap-3 mt-2">
+                  <a 
+                    href="https://github.com/DhruvArvindSingh/Deployer/releases/latest" 
+                    target="_blank"
+                    className="px-4 py-2 border border-[#222] bg-[#0a0a0a] text-[10px] font-black tracking-widest uppercase hover:border-[#00e5ff] hover:text-[#00e5ff] transition-all"
+                  >
+                    View All Releases
+                  </a>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-[10px] text-gray-500 font-black tracking-[0.2em] mb-4">OPTION C: BUILD FROM SOURCE</p>
                 <CodeBlock
                   code={`# Clone the repository
 git clone https://github.com/DhruvArvindSingh/Deployer.git
