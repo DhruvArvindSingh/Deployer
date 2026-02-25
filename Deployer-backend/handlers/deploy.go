@@ -124,12 +124,83 @@ func DeployProject(db *sql.DB, minioClient *minio.Client, cfg *config.Config) ht
 			}
 		}
 
+		// Validate uploaded files before processing
+		files := r.MultipartForm.File["files"]
+
+		// Pre-validation: check all files before uploading anything
+		hasIndexHTML := false
+		var preValidationSize int64
+		var rejectedFiles []string
+
+		for _, fileHeader := range files {
+			objectName := fileHeader.Header.Get("X-File-Path")
+			if objectName == "" {
+				objectName = fileHeader.Filename
+			}
+
+			// Check for index.html
+			if objectName == "index.html" || strings.HasSuffix(objectName, "/index.html") {
+				hasIndexHTML = true
+			}
+
+			// Validate file extension
+			if !isAllowedFileType(objectName) {
+				rejectedFiles = append(rejectedFiles, objectName)
+			}
+
+			// Check individual file size (50MB max)
+			if fileHeader.Size > 50<<20 {
+				updateDeploymentStatus(db, deploymentID, "failed", fmt.Sprintf("File too large: %s (%d bytes)", objectName, fileHeader.Size))
+				respondError(w, fmt.Sprintf("File '%s' exceeds 50MB limit", objectName), http.StatusBadRequest)
+				return
+			}
+
+			preValidationSize += fileHeader.Size
+		}
+
+		// Reject if disallowed file types found
+		if len(rejectedFiles) > 0 {
+			updateDeploymentStatus(db, deploymentID, "failed", fmt.Sprintf("Disallowed file types: %v", rejectedFiles))
+			respondError(w, fmt.Sprintf("Upload rejected: unsupported file types: %s. Only static web assets are allowed (html, css, js, images, fonts, media).", strings.Join(rejectedFiles, ", ")), http.StatusBadRequest)
+			return
+		}
+
+		// Require at least one HTML file
+		if !hasIndexHTML {
+			updateDeploymentStatus(db, deploymentID, "failed", "No index.html found")
+			respondError(w, "Deployment must contain an index.html file. Only static websites can be deployed.", http.StatusBadRequest)
+			return
+		}
+
+		// Check total deployment size (200MB max)
+		if preValidationSize > 200<<20 {
+			updateDeploymentStatus(db, deploymentID, "failed", fmt.Sprintf("Total size too large: %d bytes", preValidationSize))
+			respondError(w, fmt.Sprintf("Total deployment size exceeds 200MB limit (%d MB)", preValidationSize>>20), http.StatusBadRequest)
+			return
+		}
+
+		// Check per-user storage quota (500MB across all projects)
+		var userTotalStorage int64
+		db.QueryRow(`
+			SELECT COALESCE(SUM(d.size_bytes), 0)
+			FROM deployments d
+			JOIN projects p ON d.project_id = p.id
+			WHERE p.user_id = $1 AND d.status = 'success'
+		`, userID).Scan(&userTotalStorage)
+
+		if userTotalStorage+preValidationSize > 500<<20 {
+			updateDeploymentStatus(db, deploymentID, "failed", "User storage quota exceeded")
+			respondError(w, fmt.Sprintf("Storage quota exceeded. You're using %d MB of 500 MB. This deployment needs %d MB.", userTotalStorage>>20, preValidationSize>>20), http.StatusForbidden)
+			return
+		}
+
+		log.Printf("✅ Validation passed: %d files, %d bytes, index.html present", len(files), preValidationSize)
+
 		// Upload files to both root (live) and _deployments/{id}/ (versioned)
 		filesCount := 0
 		var totalSize int64
 		versionPrefix := fmt.Sprintf("_deployments/%s/", deploymentID)
 
-		files := r.MultipartForm.File["files"]
 		for _, fileHeader := range files {
 			file, err := fileHeader.Open()
 			if err != nil {
@@ -482,32 +553,100 @@ func updateDeploymentStatus(db *sql.DB, deploymentID, status, logs string) {
 }
 
 func getContentType(filename string) string {
-	ext := filepath.Ext(filename)
+	ext := strings.ToLower(filepath.Ext(filename))
 	contentTypes := map[string]string{
+		// Markup & Data
 		".html": "text/html",
+		".htm":  "text/html",
 		".css":  "text/css",
 		".js":   "application/javascript",
+		".mjs":  "application/javascript",
 		".json": "application/json",
+		".xml":  "application/xml",
+		".txt":  "text/plain",
+		".md":   "text/markdown",
+		".csv":  "text/csv",
+		".map":  "application/json",
+		// Images
 		".png":  "image/png",
 		".jpg":  "image/jpeg",
 		".jpeg": "image/jpeg",
 		".gif":  "image/gif",
 		".svg":  "image/svg+xml",
 		".ico":  "image/x-icon",
-		".woff": "font/woff",
-		".woff2": "font/woff2",
-		".ttf":  "font/ttf",
-		".pdf":  "application/pdf",
-		".xml":  "application/xml",
-		".txt":  "text/plain",
-		".map":  "application/json",
 		".webp": "image/webp",
+		".avif": "image/avif",
+		".bmp":  "image/bmp",
+		".tiff": "image/tiff",
+		".tif":  "image/tiff",
+		// Fonts
+		".woff":  "font/woff",
+		".woff2": "font/woff2",
+		".ttf":   "font/ttf",
+		".otf":   "font/otf",
+		".eot":   "application/vnd.ms-fontobject",
+		// Audio
+		".mp3":  "audio/mpeg",
+		".ogg":  "audio/ogg",
+		".wav":  "audio/wav",
+		".flac": "audio/flac",
+		".aac":  "audio/aac",
+		".m4a":  "audio/mp4",
+		// Video
 		".mp4":  "video/mp4",
+		".webm": "video/webm",
+		".ogv":  "video/ogg",
+		// 3D & Misc
 		".glb":  "model/gltf-binary",
+		".gltf": "model/gltf+json",
+		".pdf":  "application/pdf",
+		".wasm": "application/wasm",
+		// Web manifest & config
+		".webmanifest": "application/manifest+json",
+		".manifest":    "text/cache-manifest",
 	}
 
 	if ct, ok := contentTypes[ext]; ok {
 		return ct
 	}
 	return "application/octet-stream"
+}
+
+// isAllowedFileType checks if a filename has a whitelisted static web extension
+func isAllowedFileType(filename string) bool {
+	ext := strings.ToLower(filepath.Ext(filename))
+
+	// Files with no extension are allowed (e.g. CNAME, LICENSE)
+	if ext == "" {
+		return true
+	}
+
+	allowed := map[string]bool{
+		// Markup & Data
+		".html": true, ".htm": true, ".css": true, ".scss": true, ".less": true,
+		".js": true, ".mjs": true, ".jsx": true, ".ts": true, ".tsx": true,
+		".json": true, ".xml": true, ".txt": true, ".md": true, ".csv": true,
+		".map": true, ".yaml": true, ".yml": true, ".toml": true,
+		// Images
+		".png": true, ".jpg": true, ".jpeg": true, ".gif": true, ".svg": true,
+		".ico": true, ".webp": true, ".avif": true, ".bmp": true,
+		".tiff": true, ".tif": true, ".cur": true,
+		// Fonts
+		".woff": true, ".woff2": true, ".ttf": true, ".otf": true, ".eot": true,
+		// Audio
+		".mp3": true, ".ogg": true, ".wav": true, ".flac": true,
+		".aac": true, ".m4a": true, ".opus": true,
+		// Video
+		".mp4": true, ".webm": true, ".ogv": true, ".mov": true,
+		// 3D Models
+		".glb": true, ".gltf": true, ".obj": true, ".fbx": true, ".stl": true,
+		// Documents & Misc
+		".pdf": true, ".wasm": true,
+		// Web manifest & config
+		".webmanifest": true, ".manifest": true,
+		// Source maps & misc web
+		".LICENSE": true, ".license": true,
+	}
+
+	return allowed[ext]
 }
