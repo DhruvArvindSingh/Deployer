@@ -156,7 +156,7 @@ export default function SetupPage() {
                   code={`curl -sL https://raw.githubusercontent.com/DhruvArvindSingh/Deployer/master/deployer-frontend/public/install.sh | bash`}
                 />
                 <p className="mt-2 text-[10px] text-gray-500 font-bold tracking-widest uppercase">
-                  This script automatically detects your OS/Arch and downloads the latest binary from GitHub Releases.
+                  This script detects your OS/Arch and downloads the latest binary from GitHub Releases (v1.0.0+).
                 </p>
               </div>
 
