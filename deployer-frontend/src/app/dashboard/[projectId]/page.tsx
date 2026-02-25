@@ -121,22 +121,22 @@ export default function ProjectDetailPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-violet-400" />
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <Loader2 className="w-10 h-10 animate-spin text-[#00e5ff]" />
       </div>
     );
   }
 
   if (!project) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-16 text-center">
-        <AlertTriangle className="w-10 h-10 text-yellow-500 mx-auto mb-4" />
-        <h2 className="text-xl font-bold mb-2">Project not found</h2>
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center text-center px-4">
+        <AlertTriangle className="w-16 h-16 text-yellow-500 mx-auto mb-6" />
+        <h2 className="text-3xl font-black uppercase tracking-widest text-white mb-6">PROJECT NOT FOUND</h2>
         <Link
           href="/dashboard"
-          className="text-violet-400 hover:underline text-sm"
+          className="px-8 py-4 border-2 border-[#00e5ff] text-[#00e5ff] font-black uppercase tracking-widest hover:bg-[#00e5ff] hover:text-black transition-all"
         >
-          Back to Dashboard
+          BACK TO DASHBOARD
         </Link>
       </div>
     );
@@ -145,163 +145,161 @@ export default function ProjectDetailPage() {
   const activeDeployment = deployments.find((d) => d.is_active);
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+    <div className="max-w-7xl mx-auto px-6 py-8 pt-36 min-h-screen text-white font-sans bg-black">
       {/* Back button */}
       <Link
         href="/dashboard"
-        className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors mb-6"
+        className="inline-flex items-center gap-3 text-sm text-gray-400 font-bold uppercase tracking-widest hover:text-[#00e5ff] transition-colors mb-10"
       >
-        <ArrowLeft className="w-4 h-4" />
-        Back to Projects
+        <ArrowLeft className="w-5 h-5" />
+        BACK TO PROJECTS
       </Link>
 
       {/* Project Header */}
-      <div className="rounded-xl glass p-6 mb-6">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center">
-              <Globe className="w-6 h-6 text-white" />
+      <div className="rounded-sm border border-[#222] bg-[#050505] p-8 mb-12 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-[#00e5ff] rounded-full blur-[120px] opacity-10 pointer-events-none"></div>
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6 relative z-10">
+          <div className="flex items-center gap-6">
+            <div className="w-16 h-16 rounded-sm bg-[#00e5ff]/10 flex items-center justify-center border border-[#00e5ff]/30">
+              <Globe className="w-8 h-8 text-[#00e5ff]" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">{project.name}</h1>
-              <div className="flex items-center gap-2 mt-1">
+              <h1 className="text-4xl md:text-5xl font-black uppercase tracking-wide mb-2 drop-shadow-[0_0_10px_rgba(0,229,255,0.2)]">{project.name}</h1>
+              <div className="flex items-center gap-4">
                 <a
                   href={getProjectUrl(project.name)}
                   target="_blank"
-                  className="flex items-center gap-1 text-sm text-gray-400 hover:text-violet-400 transition-colors"
+                  className="flex items-center gap-2 text-sm text-[#00e5ff] font-bold tracking-widest hover:text-white transition-colors"
                 >
-                  <ExternalLink className="w-3.5 h-3.5" />
+                  <ExternalLink className="w-4 h-4" />
                   {project.name}.dsingh.fun
                 </a>
                 <button
                   onClick={copyUrl}
-                  className="p-1 rounded hover:bg-white/5 transition-all"
+                  className="p-2 rounded-sm bg-white/5 border border-white/10 hover:bg-white/10 transition-all font-bold tracking-widest text-xs flex items-center gap-2"
                 >
                   {copied ? (
-                    <Check className="w-3.5 h-3.5 text-emerald-400" />
+                    <>
+                      <Check className="w-4 h-4 text-[#00e5ff]" />
+                      <span className="text-[#00e5ff]">COPIED</span>
+                    </>
                   ) : (
-                    <Copy className="w-3.5 h-3.5 text-gray-500" />
+                    <>
+                      <Copy className="w-4 h-4 text-gray-400" />
+                      <span className="text-gray-400">COPY</span>
+                    </>
                   )}
                 </button>
               </div>
             </div>
           </div>
           {activeDeployment && (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 text-xs font-medium">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              v{activeDeployment.version} Live
+            <span className="inline-flex items-center gap-2 px-4 py-2 border border-[#00e5ff]/30 rounded-sm bg-[#00e5ff]/10 text-[#00e5ff] text-xs font-black tracking-widest uppercase">
+              <span className="w-2 h-2 rounded-full bg-[#00e5ff] animate-pulse" />
+              V{activeDeployment.version} LIVE
             </span>
           )}
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-6 border-t border-white/10">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 mt-10 pt-8 border-t border-[#222] relative z-10">
           <div>
-            <p className="text-xs text-gray-500 mb-1">Status</p>
-            <p className="text-sm font-medium text-emerald-400">Active</p>
+            <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mb-2">STATUS</p>
+            <p className="text-lg font-black text-[#00e5ff] uppercase">ACTIVE</p>
           </div>
           <div>
-            <p className="text-xs text-gray-500 mb-1">Created</p>
-            <p className="text-sm font-medium">
-              {formatDate(project.created_at)}
-            </p>
+            <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mb-2">CREATED</p>
+            <p className="text-lg font-black uppercase">{formatDate(project.created_at)}</p>
           </div>
           <div>
-            <p className="text-xs text-gray-500 mb-1">Versions</p>
-            <p className="text-sm font-medium">{deployments.length}</p>
+            <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mb-2">VERSIONS</p>
+            <p className="text-lg font-black">{deployments.length}</p>
           </div>
           <div>
-            <p className="text-xs text-gray-500 mb-1">Active Version</p>
-            <p className="text-sm font-medium flex items-center gap-1">
-              <Hash className="w-3.5 h-3.5 text-violet-400" />
-              {activeDeployment ? `v${activeDeployment.version}` : "—"}
+            <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mb-2">ACTIVE VERSION</p>
+            <p className="text-lg font-black flex items-center gap-2 uppercase">
+              <Hash className="w-5 h-5 text-[#00e5ff]" />
+              {activeDeployment ? `V${activeDeployment.version}` : "—"}
             </p>
           </div>
         </div>
       </div>
 
       {/* Deployments */}
-      <div className="mb-4">
-        <h2 className="text-lg font-semibold flex items-center gap-2">
-          <Rocket className="w-5 h-5 text-violet-400" />
-          Deployment History
-        </h2>
-        <p className="text-xs text-gray-500 mt-1">
-          Click any previous version to rollback
-        </p>
+      <div className="mb-6 flex items-center gap-4">
+        <div className="w-10 h-10 flex items-center justify-center bg-[#00e5ff]/10 text-[#00e5ff] rounded-sm">
+          <Rocket className="w-5 h-5" />
+        </div>
+        <h2 className="text-2xl font-black uppercase tracking-widest">DEPLOYMENT HISTORY</h2>
       </div>
 
       {deployments.length > 0 ? (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {deployments.map((deploy) => (
             <div
               key={deploy.id}
               className={cn(
-                "rounded-xl glass transition-all",
-                deploy.is_active && "glow-sm border-emerald-500/20"
+                "rounded-sm border border-[#222] bg-[#0a0a0a] transition-all overflow-hidden group/item",
+                deploy.is_active && "border-[#00e5ff]/50 shadow-[0_0_20px_rgba(0,229,255,0.1)]"
               )}
             >
               <div
-                className="flex items-center justify-between p-4 cursor-pointer hover:bg-white/5 rounded-xl transition-all"
+                className="flex flex-col sm:flex-row sm:items-center justify-between p-6 cursor-pointer hover:bg-[#111] transition-all relative"
                 onClick={() =>
                   setExpandedDeploy(
                     expandedDeploy === deploy.id ? null : deploy.id
                   )
                 }
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-6">
                   <span
                     className={cn(
-                      "w-2.5 h-2.5 rounded-full",
-                      getStatusDot(deploy.status)
+                      "w-3 h-3 rounded-full",
+                      deploy.status === "success" ? "bg-[#00e5ff] shadow-[0_0_10px_#00e5ff]"
+                        : deploy.status === "failed" ? "bg-red-500 shadow-[0_0_10px_#f00]"
+                          : "bg-yellow-500 shadow-[0_0_10px_#ff0]"
                     )}
                   />
                   <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium">
-                        v{deploy.version}
+                    <div className="flex items-center gap-4 mb-2">
+                      <span className="text-xl font-black uppercase tracking-wide">
+                        V{deploy.version}
                       </span>
                       <span
                         className={cn(
-                          "text-xs font-medium px-2 py-0.5 rounded",
+                          "text-xs font-black tracking-widest uppercase px-3 py-1 rounded-sm border",
                           deploy.status === "success"
-                            ? "bg-emerald-500/10 text-emerald-400"
+                            ? "bg-[#00e5ff]/10 border-[#00e5ff]/30 text-[#00e5ff]"
                             : deploy.status === "failed"
-                            ? "bg-red-500/10 text-red-400"
-                            : "bg-yellow-500/10 text-yellow-400"
+                              ? "bg-red-500/10 border-red-500/30 text-red-500"
+                              : "bg-yellow-500/10 border-yellow-500/30 text-yellow-500"
                         )}
                       >
                         {deploy.status}
                       </span>
                       {deploy.is_active && (
-                        <span className="flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded bg-violet-500/10 text-violet-400">
-                          <CheckCircle2 className="w-3 h-3" />
-                          Active
+                        <span className="flex items-center gap-2 text-xs font-black tracking-widest uppercase px-3 py-1 rounded-sm bg-[#00e5ff] text-black border border-[#00e5ff]">
+                          <CheckCircle2 className="w-4 h-4" />
+                          ACTIVE
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-xs text-gray-500">
-                        {timeAgo(deploy.created_at)}
-                      </span>
-                      <span className="text-xs text-gray-600">•</span>
-                      <span className="text-xs text-gray-500">
-                        {deploy.files_count} files
-                      </span>
-                      <span className="text-xs text-gray-600">•</span>
-                      <span className="text-xs text-gray-500">
-                        {formatBytes(deploy.size_bytes)}
-                      </span>
+                    <div className="flex items-center gap-4 text-xs font-bold tracking-widest uppercase text-gray-500">
+                      <span>{timeAgo(deploy.created_at)}</span>
+                      <span className="text-[#333]">•</span>
+                      <span>{deploy.files_count} FILES</span>
+                      <span className="text-[#333]">•</span>
+                      <span>{formatBytes(deploy.size_bytes)}</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-6 mt-4 sm:mt-0">
                   {!deploy.is_active && deploy.status === "success" && (
                     <>
                       {rollbackConfirm === deploy.id ? (
                         <div
-                          className="flex items-center gap-2 animate-fade-in"
+                          className="flex items-center gap-3 animate-fade-in"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <button
@@ -310,25 +308,23 @@ export default function ProjectDetailPage() {
                               handleRollback(deploy.id);
                             }}
                             disabled={rollingBack}
-                            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-yellow-500/10 text-yellow-400 text-xs font-medium hover:bg-yellow-500/20 transition-all disabled:opacity-50"
+                            className="flex items-center gap-2 px-4 py-2 rounded-sm border border-yellow-500/50 bg-yellow-500/10 text-yellow-500 text-xs font-black tracking-widest uppercase hover:bg-yellow-500 hover:text-black transition-all disabled:opacity-50"
                           >
                             {rollingBack ? (
-                              <Loader2 className="w-3 h-3 animate-spin" />
+                              <Loader2 className="w-4 h-4 animate-spin" />
                             ) : (
-                              <RotateCcw className="w-3 h-3" />
+                              <RotateCcw className="w-4 h-4" />
                             )}
-                            {rollingBack
-                              ? "Rolling back..."
-                              : `Deploy v${deploy.version}`}
+                            {rollingBack ? "ROLLING BACK..." : `DEPLOY V${deploy.version}`}
                           </button>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               setRollbackConfirm(null);
                             }}
-                            className="px-3 py-1.5 rounded-lg bg-white/5 text-gray-400 text-xs hover:bg-white/10 transition-all"
+                            className="px-4 py-2 rounded-sm bg-[#222] text-white text-xs font-black tracking-widest uppercase hover:bg-[#333] transition-all"
                           >
-                            Cancel
+                            CANCEL
                           </button>
                         </div>
                       ) : (
@@ -337,96 +333,95 @@ export default function ProjectDetailPage() {
                             e.stopPropagation();
                             setRollbackConfirm(deploy.id);
                           }}
-                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs text-gray-500 hover:text-yellow-400 hover:bg-yellow-500/5 transition-all"
-                          title={`Rollback to v${deploy.version}`}
+                          className="flex items-center gap-2 px-4 py-2 border border-transparent rounded-sm text-xs font-black tracking-widest uppercase text-gray-500 hover:text-yellow-500 hover:border-yellow-500/30 hover:bg-yellow-500/10 transition-all opacity-0 group-hover/item:opacity-100"
+                          title={`Rollback to V${deploy.version}`}
                         >
-                          <RotateCcw className="w-3.5 h-3.5" />
-                          Rollback
+                          <RotateCcw className="w-4 h-4" />
+                          ROLLBACK
                         </button>
                       )}
                     </>
                   )}
                   {expandedDeploy === deploy.id ? (
-                    <ChevronUp className="w-4 h-4 text-gray-500" />
+                    <ChevronUp className="w-6 h-6 text-[#00e5ff]" />
                   ) : (
-                    <ChevronDown className="w-4 h-4 text-gray-500" />
+                    <ChevronDown className="w-6 h-6 text-gray-600" />
                   )}
                 </div>
               </div>
 
               {expandedDeploy === deploy.id && (
-                <div className="px-4 pb-4 pt-0 animate-slide-down">
-                  <div className="rounded-lg bg-black/30 p-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="px-6 pb-6 pt-0 animate-slide-down border-t border-[#222]">
+                  <div className="bg-[#111] p-6 mt-6 rounded-sm grid grid-cols-2 sm:grid-cols-4 gap-6 border border-[#222]">
                     <div>
-                      <div className="flex items-center gap-1 text-xs text-gray-500 mb-1">
-                        <Hash className="w-3 h-3" />
-                        Version
+                      <div className="flex items-center gap-2 text-xs text-gray-500 font-bold uppercase tracking-widest mb-2">
+                        <Hash className="w-4 h-4" />
+                        VERSION
                       </div>
-                      <p className="text-sm font-medium">v{deploy.version}</p>
+                      <p className="text-lg font-black uppercase">V{deploy.version}</p>
                     </div>
                     <div>
-                      <div className="flex items-center gap-1 text-xs text-gray-500 mb-1">
-                        <FileText className="w-3 h-3" />
-                        Files
+                      <div className="flex items-center gap-2 text-xs text-gray-500 font-bold uppercase tracking-widest mb-2">
+                        <FileText className="w-4 h-4" />
+                        FILES
                       </div>
-                      <p className="text-sm font-medium">
-                        {deploy.files_count}
-                      </p>
+                      <p className="text-lg font-black">{deploy.files_count}</p>
                     </div>
                     <div>
-                      <div className="flex items-center gap-1 text-xs text-gray-500 mb-1">
-                        <HardDrive className="w-3 h-3" />
-                        Size
+                      <div className="flex items-center gap-2 text-xs text-gray-500 font-bold uppercase tracking-widest mb-2">
+                        <HardDrive className="w-4 h-4" />
+                        SIZE
                       </div>
-                      <p className="text-sm font-medium">
+                      <p className="text-lg font-black">
                         {formatBytes(deploy.size_bytes)}
                       </p>
                     </div>
                     <div>
-                      <div className="flex items-center gap-1 text-xs text-gray-500 mb-1">
-                        <Clock className="w-3 h-3" />
-                        Deployed
+                      <div className="flex items-center gap-2 text-xs text-gray-500 font-bold uppercase tracking-widest mb-2">
+                        <Clock className="w-4 h-4" />
+                        DEPLOYED
                       </div>
-                      <p className="text-sm font-medium">
+                      <p className="text-lg font-black uppercase text-sm">
                         {formatDate(deploy.created_at)}
                       </p>
                     </div>
                   </div>
 
-                  <div className="mt-3 rounded-lg bg-black/30 p-4">
-                    <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
-                      <Terminal className="w-3 h-3" />
-                      Method
+                  <div className="mt-4 bg-[#111] border border-[#222] p-6 rounded-sm">
+                    <div className="flex items-center gap-2 text-xs text-gray-500 font-bold uppercase tracking-widest mb-2">
+                      <Terminal className="w-4 h-4" />
+                      METHOD
                     </div>
-                    <p className="text-sm font-medium">CLI Deploy</p>
+                    <p className="text-lg font-black uppercase">CLI DEPLOY</p>
                   </div>
 
                   {deploy.logs && (
-                    <div className="mt-3 rounded-lg bg-black/30 p-4">
-                      <p className="text-xs text-gray-500 mb-2 font-medium">
-                        Deployment Logs
+                    <div className="mt-4 bg-black border border-[#222] p-6 rounded-sm">
+                      <p className="text-xs text-[#00e5ff] font-black uppercase tracking-widest mb-4">
+                        DEPLOYMENT LOGS
                       </p>
-                      <pre className="text-xs text-gray-400 font-mono whitespace-pre-wrap">
+                      <pre className="text-xs font-mono text-gray-400 whitespace-pre-wrap leading-relaxed">
                         {deploy.logs}
                       </pre>
                     </div>
                   )}
 
-                  <p className="text-xs text-gray-600 mt-3 font-mono">
-                    ID: {deploy.id}
-                  </p>
+                  <div className="mt-6 flex justify-end">
+                    <p className="text-[10px] text-gray-700 font-mono tracking-widest uppercase">
+                      ID: {deploy.id}
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
           ))}
         </div>
       ) : (
-        <div className="text-center py-12 glass rounded-xl">
-          <Rocket className="w-8 h-8 text-gray-600 mx-auto mb-3" />
-          <p className="text-gray-400 text-sm">No deployments yet</p>
-          <p className="text-gray-600 text-xs mt-1">
-            Run <code className="text-violet-400">deployer deploy</code> to
-            deploy this project
+        <div className="text-center py-24 border border-[#222] rounded-sm bg-[#050505]">
+          <Rocket className="w-12 h-12 text-gray-600 mx-auto mb-6 opacity-50" />
+          <p className="text-lg font-black uppercase tracking-widest mb-2">NO DEPLOYMENTS YET</p>
+          <p className="text-gray-500 text-sm font-bold tracking-widest uppercase">
+            RUN <code className="text-[#00e5ff] font-mono mx-1">deployer deploy</code> TO INITIALIZE
           </p>
         </div>
       )}

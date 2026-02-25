@@ -1,6 +1,6 @@
-# DeployNet Frontend
+# Deployer Frontend
 
-Next.js 14 web dashboard for the DeployNet platform — inspired by Vercel's UI.
+Next.js 14 web dashboard for the Deployer platform — inspired by Vercel's UI.
 
 ## Features
 
@@ -48,4 +48,4 @@ npm start
 
 ---
 
-**Part of DeployNet** — The homelab deployment platform
+**Part of Deployer** — The homelab deployment platform
