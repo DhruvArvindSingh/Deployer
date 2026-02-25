@@ -11,7 +11,6 @@ import {
   formatDate,
   formatBytes,
   getProjectUrl,
-  getStatusDot,
 } from "@/lib/utils";
 import {
   ArrowLeft,
