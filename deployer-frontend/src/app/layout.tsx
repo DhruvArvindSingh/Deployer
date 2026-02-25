@@ -7,7 +7,7 @@ import { AuthProvider } from "@/lib/auth-context";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "DeployNet — Deploy Static Sites Instantly",
+  title: "Deployer — Deploy Static Sites Instantly",
   description:
     "Self-hosted PaaS for deploying static websites to your homelab with a single command.",
 };

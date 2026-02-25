@@ -34,28 +34,28 @@ function CodeBlock({
   }
 
   return (
-    <div className="relative group rounded-lg bg-black/40 border border-white/5 overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-2 border-b border-white/5">
-        <span className="text-xs text-gray-500">{language}</span>
+    <div className="relative group rounded-sm bg-[#050505] border border-[#222] overflow-hidden mt-6 mb-8">
+      <div className="flex items-center justify-between px-6 py-3 border-b border-[#222] bg-[#0a0a0a]">
+        <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{language}</span>
         <button
           onClick={handleCopy}
-          className="flex items-center gap-1 text-xs text-gray-500 hover:text-white transition-colors"
+          className="flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase text-gray-500 hover:text-[#00e5ff] transition-colors"
         >
           {copied ? (
             <>
-              <Check className="w-3 h-3 text-emerald-400" />
-              <span className="text-emerald-400">Copied</span>
+              <Check className="w-3 h-3 text-[#00e5ff]" />
+              <span className="text-[#00e5ff]">COPIED</span>
             </>
           ) : (
             <>
               <Copy className="w-3 h-3" />
-              Copy
+              COPY
             </>
           )}
         </button>
       </div>
-      <pre className="p-4 overflow-x-auto">
-        <code className="text-sm font-mono text-gray-300">{code}</code>
+      <pre className="p-6 overflow-x-auto">
+        <code className="text-sm font-mono text-[#00e5ff] opacity-80">{code}</code>
       </pre>
     </div>
   );
@@ -71,22 +71,26 @@ interface StepProps {
 
 function Step({ number, title, description, icon: Icon, children }: StepProps) {
   return (
-    <div className="relative pl-10 pb-12 last:pb-0">
+    <div className="relative pl-14 pb-16 last:pb-0">
       {/* Connector line */}
-      <div className="absolute left-[15px] top-10 bottom-0 w-px bg-gradient-to-b from-violet-500/30 to-transparent last:hidden" />
+      <div className="absolute left-[20px] top-12 bottom-0 w-[2px] bg-gradient-to-b from-[#00e5ff]/30 to-transparent last:hidden" />
 
       {/* Step number */}
-      <div className="absolute left-0 w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center text-xs font-bold text-white">
-        {number}
+      <div className="absolute left-0 top-1 w-10 h-10 rounded-sm bg-[#00e5ff] flex items-center justify-center text-sm font-black text-black tracking-widest shadow-[0_0_15px_rgba(0,229,255,0.4)]">
+        0{number}
       </div>
 
       <div>
-        <div className="flex items-center gap-2 mb-1">
-          <Icon className="w-4 h-4 text-violet-400" />
-          <h3 className="text-lg font-semibold">{title}</h3>
+        <div className="flex items-center gap-4 mb-3">
+          <div className="w-10 h-10 rounded-sm bg-[#00e5ff]/10 flex items-center justify-center text-[#00e5ff] border border-[#00e5ff]/30">
+            <Icon className="w-5 h-5" />
+          </div>
+          <h3 className="text-2xl font-black uppercase tracking-widest">{title}</h3>
         </div>
-        <p className="text-sm text-gray-400 mb-4">{description}</p>
-        {children}
+        <p className="text-sm font-bold tracking-widest text-gray-400 uppercase leading-relaxed mb-6">{description}</p>
+        <div className="relative z-10">
+          {children}
+        </div>
       </div>
     </div>
   );
@@ -96,24 +100,26 @@ export default function SetupPage() {
   const [activeTab, setActiveTab] = useState<"cli" | "backend" | "auth">("cli");
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+    <div className="max-w-6xl mx-auto px-6 py-8 pt-36 min-h-screen text-white font-sans bg-black">
       {/* Header */}
-      <div className="mb-10">
-        <div className="flex items-center gap-3 mb-2">
-          <Terminal className="w-7 h-7 text-violet-400" />
-          <h1 className="text-3xl font-bold">Setup Guide</h1>
+      <div className="mb-16">
+        <div className="flex items-center gap-4 mb-4">
+          <div className="w-12 h-12 flex items-center justify-center bg-[#00e5ff]/10 text-[#00e5ff] rounded-sm">
+            <Terminal className="w-6 h-6" />
+          </div>
+          <h1 className="text-5xl font-black uppercase tracking-widest drop-shadow-[0_0_10px_rgba(0,229,255,0.4)]">SETUP GUIDE</h1>
         </div>
-        <p className="text-gray-400 mt-1">
-          Get started deploying static sites to your homelab in minutes.
+        <p className="text-gray-400 text-lg tracking-wide uppercase font-light">
+          Get started deploying applications to <span className="text-white font-medium">Deployer</span> in minutes.
         </p>
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-1 p-1 rounded-xl glass mb-8 w-fit">
+      <div className="flex flex-wrap items-center gap-2 p-2 rounded-sm bg-[#050505] border border-[#222] mb-16 w-fit">
         {[
-          { id: "cli" as const, label: "CLI Setup", icon: Terminal },
-          { id: "backend" as const, label: "Backend Setup", icon: Server },
-          { id: "auth" as const, label: "Auth Setup", icon: Shield },
+          { id: "cli" as const, label: "CLI SETUP", icon: Terminal },
+          { id: "backend" as const, label: "BACKEND SETUP", icon: Server },
+          { id: "auth" as const, label: "AUTH SETUP", icon: Shield },
         ].map((tab) => {
           const Icon = tab.icon;
           return (
@@ -121,10 +127,10 @@ export default function SetupPage() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
+                "flex items-center gap-3 px-6 py-3 rounded-sm text-xs font-black tracking-widest transition-all",
                 activeTab === tab.id
-                  ? "bg-white/10 text-white"
-                  : "text-gray-400 hover:text-white"
+                  ? "bg-[#00e5ff] text-black shadow-[0_0_15px_rgba(0,229,255,0.3)]"
+                  : "text-gray-500 hover:text-white hover:bg-[#111]"
               )}
             >
               <Icon className="w-4 h-4" />
@@ -136,11 +142,11 @@ export default function SetupPage() {
 
       {/* CLI Setup */}
       {activeTab === "cli" && (
-        <div className="animate-fade-in">
+        <div className="animate-fade-in space-y-4">
           <Step
             number={1}
-            title="Install the CLI"
-            description="Build the deployer binary from source and add it to your PATH."
+            title="INSTALL THE CLI"
+            description="BUILD THE DEPLOYER BINARY FROM SOURCE AND ADD IT TO YOUR PATH."
             icon={Download}
           >
             <CodeBlock
@@ -161,8 +167,8 @@ deployer --version`}
 
           <Step
             number={2}
-            title="Authenticate"
-            description="Log in with your GitHub or Google account via the browser."
+            title="AUTHENTICATE"
+            description="LOG IN WITH YOUR GITHUB OR GOOGLE ACCOUNT VIA THE BROWSER."
             icon={LogIn}
           >
             <CodeBlock
@@ -177,21 +183,21 @@ deployer login
 #
 # ✓ Token saved to ~/.deployer/config.json`}
             />
-            <div className="mt-3 rounded-lg bg-violet-500/5 border border-violet-500/20 p-4">
-              <p className="text-sm text-violet-300">
-                <strong>Tip:</strong> Your token is valid for 30 days. Run{" "}
-                <code className="px-1.5 py-0.5 rounded bg-violet-500/10 text-xs">
+            <div className="mt-4 rounded-sm bg-[#0a0a0a] border border-[#222] p-6">
+              <p className="text-xs font-bold tracking-widest text-[#00e5ff] uppercase leading-relaxed">
+                <span className="text-white">TIP:</span> YOUR TOKEN IS VALID FOR 30 DAYS. RUN{" "}
+                <code className="px-2 py-1 mx-1 rounded-sm bg-black border border-[#222] text-[#00e5ff]">
                   deployer login
                 </code>{" "}
-                again when it expires.
+                AGAIN WHEN IT EXPIRES.
               </p>
             </div>
           </Step>
 
           <Step
             number={3}
-            title="Deploy Your Project"
-            description="Navigate to your project directory and deploy with a single command."
+            title="DEPLOY YOUR PROJECT"
+            description="NAVIGATE TO YOUR PROJECT DIRECTORY AND DEPLOY WITH A SINGLE COMMAND."
             icon={Rocket}
           >
             <CodeBlock
@@ -213,8 +219,8 @@ deployer deploy
 
           <Step
             number={4}
-            title="Manage Deployments"
-            description="List, check status, or delete your deployed projects."
+            title="MANAGE DEPLOYMENTS"
+            description="LIST, CHECK STATUS, OR DELETE YOUR DEPLOYED PROJECTS."
             icon={List}
           >
             <CodeBlock
@@ -230,12 +236,14 @@ deployer delete <project-id>`}
           </Step>
 
           {/* Supported Frameworks */}
-          <div className="mt-8 rounded-xl glass p-6">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <Zap className="w-5 h-5 text-violet-400" />
-              Supported Frameworks
+          <div className="mt-12 rounded-sm border border-[#222] bg-[#050505] p-8">
+            <h3 className="text-2xl font-black uppercase tracking-widest mb-8 flex items-center gap-4">
+              <div className="w-10 h-10 flex items-center justify-center bg-[#00e5ff]/10 text-[#00e5ff] rounded-sm">
+                <Zap className="w-5 h-5" />
+              </div>
+              SUPPORTED FRAMEWORKS
             </h3>
-            <div className="grid sm:grid-cols-3 gap-4">
+            <div className="grid sm:grid-cols-3 gap-6">
               {[
                 {
                   name: "Next.js",
@@ -255,16 +263,16 @@ deployer delete <project-id>`}
               ].map((fw) => (
                 <div
                   key={fw.name}
-                  className="rounded-lg bg-white/5 p-4 border border-white/5"
+                  className="rounded-sm bg-[#0a0a0a] p-6 border border-[#222] hover:border-[#444] transition-all"
                 >
-                  <h4 className="font-semibold text-sm mb-2">{fw.name}</h4>
-                  <div className="space-y-1">
-                    <p className="text-xs text-gray-500">
-                      <span className="text-gray-400">Detects:</span>{" "}
+                  <h4 className="font-black text-lg uppercase tracking-widest mb-4">{fw.name}</h4>
+                  <div className="space-y-4">
+                    <p className="text-xs font-bold tracking-widest uppercase text-gray-400">
+                      <span className="text-[#00e5ff] block mb-1">DETECTS</span>{" "}
                       {fw.detect}
                     </p>
-                    <p className="text-xs text-gray-500">
-                      <span className="text-gray-400">Uploads:</span>{" "}
+                    <p className="text-xs font-bold tracking-widest uppercase text-gray-400">
+                      <span className="text-[#00e5ff] block mb-1">UPLOADS</span>{" "}
                       {fw.output}
                     </p>
                   </div>
@@ -277,14 +285,14 @@ deployer delete <project-id>`}
 
       {/* Backend Setup */}
       {activeTab === "backend" && (
-        <div className="animate-fade-in">
+        <div className="animate-fade-in space-y-4">
           <Step
             number={1}
-            title="Prerequisites"
-            description="Make sure you have the following installed on your server."
+            title="PREREQUISITES"
+            description="MAKE SURE YOU HAVE THE FOLLOWING INSTALLED ON YOUR SERVER."
             icon={Server}
           >
-            <div className="grid sm:grid-cols-2 gap-3">
+            <div className="grid sm:grid-cols-2 gap-4">
               {[
                 "Go 1.22+",
                 "PostgreSQL",
@@ -293,9 +301,9 @@ deployer delete <project-id>`}
               ].map((item) => (
                 <div
                   key={item}
-                  className="flex items-center gap-2 px-4 py-3 rounded-lg bg-white/5 border border-white/5 text-sm"
+                  className="flex items-center gap-3 px-6 py-4 rounded-sm bg-[#0a0a0a] border border-[#222] text-sm font-bold tracking-widest uppercase hover:border-[#00e5ff]/50 transition-all"
                 >
-                  <ChevronRight className="w-4 h-4 text-emerald-400" />
+                  <ChevronRight className="w-5 h-5 text-[#00e5ff]" />
                   {item}
                 </div>
               ))}
@@ -304,8 +312,8 @@ deployer delete <project-id>`}
 
           <Step
             number={2}
-            title="Clone & Configure"
-            description="Clone the repository and set up your environment variables."
+            title="CLONE & CONFIGURE"
+            description="CLONE THE REPOSITORY AND SET UP YOUR ENVIRONMENT VARIABLES."
             icon={FolderOpen}
           >
             <CodeBlock
@@ -318,7 +326,7 @@ cd Deployer/Deployer-backend
 
 # Or manually create .env:
 cat > .env << 'EOF'
-DATABASE_URL=postgresql://user:pass@localhost:5432/deploynet
+DATABASE_URL=postgresql://user:pass@localhost:5432/deployer
 JWT_SECRET=your-secret-key-minimum-32-characters-long
 MINIO_ENDPOINT=localhost:9000
 MINIO_ACCESS_KEY=admin
@@ -335,8 +343,8 @@ EOF`}
 
           <Step
             number={3}
-            title="Run the Backend"
-            description="Build and start the backend server."
+            title="RUN THE BACKEND"
+            description="BUILD AND START THE BACKEND SERVER."
             icon={Rocket}
           >
             <CodeBlock
@@ -347,8 +355,8 @@ go mod download
 go run main.go
 
 # Or build a binary
-go build -o deploynet-backend
-./deploynet-backend
+go build -o deployer-backend
+./deployer-backend
 
 # Server starts at http://localhost:8080
 # ✅ Connected to database
@@ -360,8 +368,8 @@ go build -o deploynet-backend
 
           <Step
             number={4}
-            title="Verify"
-            description="Make sure everything is working."
+            title="VERIFY"
+            description="MAKE SURE EVERYTHING IS WORKING."
             icon={Shield}
           >
             <CodeBlock
@@ -378,71 +386,71 @@ curl http://localhost:8080/health
 
       {/* Auth Setup */}
       {activeTab === "auth" && (
-        <div className="animate-fade-in">
+        <div className="animate-fade-in space-y-4">
           <Step
             number={1}
-            title="GitHub OAuth App"
-            description="Create a GitHub OAuth application for authentication."
+            title="GITHUB OAUTH APP"
+            description="CREATE A GITHUB OAUTH APPLICATION FOR AUTHENTICATION."
             icon={Shield}
           >
-            <div className="space-y-3">
-              <div className="rounded-lg bg-white/5 border border-white/5 p-4 text-sm text-gray-300 space-y-2">
+            <div className="space-y-4">
+              <div className="rounded-sm bg-[#0a0a0a] border border-[#222] p-6 text-sm text-gray-400 font-bold tracking-widest uppercase space-y-4">
                 <p>
-                  1. Go to{" "}
+                  1. GO TO{" "}
                   <a
                     href="https://github.com/settings/developers"
                     target="_blank"
-                    className="text-violet-400 hover:underline"
+                    className="text-[#00e5ff] hover:text-white transition-colors"
                   >
-                    GitHub Developer Settings
+                    GITHUB DEVELOPER SETTINGS
                   </a>
                 </p>
-                <p>2. Click &quot;New OAuth App&quot;</p>
-                <p>3. Fill in:</p>
-                <ul className="ml-4 space-y-1 text-gray-400">
+                <p>2. CLICK &quot;NEW OAUTH APP&quot;</p>
+                <p>3. FILL IN:</p>
+                <ul className="ml-6 space-y-2 text-gray-500">
                   <li>
-                    • <strong>App name:</strong> DeployNet
+                    • <strong className="text-white">APP NAME:</strong> DEPLOYER
                   </li>
                   <li>
-                    • <strong>Homepage URL:</strong> https://yourdomain.com
+                    • <strong className="text-white">HOMEPAGE URL:</strong> HTTPS://YOURDOMAIN.COM
                   </li>
                   <li>
-                    • <strong>Callback URL:</strong>{" "}
-                    https://auth.yourdomain.com/callback.html
+                    • <strong className="text-white">CALLBACK URL:</strong>{" "}
+                    HTTPS://AUTH.YOURDOMAIN.COM/CALLBACK.HTML
                   </li>
                 </ul>
-                <p>4. Copy the Client ID and Client Secret</p>
+                <p>4. COPY THE CLIENT ID AND CLIENT SECRET</p>
               </div>
             </div>
           </Step>
 
           <Step
             number={2}
-            title="Google OAuth"
-            description="Set up Google OAuth credentials (optional)."
+            title="GOOGLE OAUTH"
+            description="SET UP GOOGLE OAUTH CREDENTIALS (OPTIONAL)."
             icon={Globe}
           >
-            <div className="rounded-lg bg-white/5 border border-white/5 p-4 text-sm text-gray-300 space-y-2">
+            <div className="rounded-sm bg-[#0a0a0a] border border-[#222] p-6 text-sm text-gray-400 font-bold tracking-widest uppercase space-y-4">
               <p>
-                1. Go to{" "}
+                1. GO TO{" "}
                 <a
                   href="https://console.cloud.google.com/apis/credentials"
                   target="_blank"
-                  className="text-violet-400 hover:underline"
+                  className="text-[#00e5ff] hover:text-white transition-colors"
                 >
-                  Google Cloud Console
+                  GOOGLE CLOUD CONSOLE
                 </a>
               </p>
-              <p>2. Create a new OAuth 2.0 Client ID</p>
-              <p>3. Set the redirect URI to your callback URL</p>
-              <p>4. Copy the Client ID and Client Secret</p>
+              <p>2. CREATE A NEW OAUTH 2.0 CLIENT ID</p>
+              <p>3. SET THE REDIRECT URI TO YOUR CALLBACK URL</p>
+              <p>4. COPY THE CLIENT ID AND CLIENT SECRET</p>
             </div>
           </Step>
 
           <Step
             number={3}
-            title="Configure Auth Page"
-            description="Update the static auth page with your credentials."
+            title="CONFIGURE AUTH PAGE"
+            description="UPDATE THE STATIC AUTH PAGE WITH YOUR CREDENTIALS."
             icon={Terminal}
           >
             <CodeBlock
@@ -467,8 +475,8 @@ curl http://localhost:8080/health
 
           <Step
             number={4}
-            title="Host the Auth Page"
-            description="Serve the auth page via any static hosting solution."
+            title="HOST THE AUTH PAGE"
+            description="SERVE THE AUTH PAGE VIA ANY STATIC HOSTING SOLUTION."
             icon={Globe}
           >
             <CodeBlock
