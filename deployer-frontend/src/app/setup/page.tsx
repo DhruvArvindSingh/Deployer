@@ -146,11 +146,21 @@ export default function SetupPage() {
           <Step
             number={1}
             title="INSTALL THE CLI"
-            description="BUILD THE DEPLOYER BINARY FROM SOURCE AND ADD IT TO YOUR PATH."
+            description="QUICK INSTALL WITH A ONE-LINER OR BUILD FROM SOURCE."
             icon={Download}
           >
-            <CodeBlock
-              code={`# Clone the repository
+            <div className="space-y-6">
+              <div>
+                <p className="text-[10px] text-[#00e5ff] font-black tracking-[0.2em] mb-4">OPTION A: QUICK INSTALL (LINUX/MAC)</p>
+                <CodeBlock
+                  code={`curl -sL https://deployer-be.dsingh.fun/install.sh | bash`}
+                />
+              </div>
+
+              <div>
+                <p className="text-[10px] text-gray-500 font-black tracking-[0.2em] mb-4">OPTION B: BUILD FROM SOURCE</p>
+                <CodeBlock
+                  code={`# Clone the repository
 git clone https://github.com/DhruvArvindSingh/Deployer.git
 cd Deployer/Deployer-cli
 
@@ -162,7 +172,9 @@ sudo mv deployer /usr/local/bin/
 
 # Verify installation
 deployer --version`}
-            />
+                />
+              </div>
+            </div>
           </Step>
 
           <Step
@@ -219,6 +231,25 @@ deployer deploy
 
           <Step
             number={4}
+            title="CONFIGURE CI/CD"
+            description="AUTO-DEPLOY YOUR PROJECT ON EVERY PUSH WITH GITHUB ACTIONS."
+            icon={Zap}
+          >
+            <CodeBlock
+              code={`# Run setup inside your project directory
+deployer setup
+
+# This will:
+# 1. Detect your git repository
+# 2. Generate .github/workflows/deploy.yml
+# 3. Configure the subdirectory (for monorepos)
+#
+# ✓ Action created! Just add DEPLOYER_TOKEN to GitHub Secrets.`}
+            />
+          </Step>
+
+          <Step
+            number={5}
             title="MANAGE DEPLOYMENTS"
             description="LIST, CHECK STATUS, OR DELETE YOUR DEPLOYED PROJECTS."
             icon={List}

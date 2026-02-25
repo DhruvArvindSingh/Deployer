@@ -69,6 +69,7 @@ func main() {
 
 	// CLI download (public)
 	r.HandleFunc("/api/cli/latest", handlers.ServeLatestCLI()).Methods("GET")
+	r.HandleFunc("/install.sh", handlers.ServeInstallScript()).Methods("GET")
 
 	// Protected routes
 	api := r.PathPrefix("/api").Subrouter()
