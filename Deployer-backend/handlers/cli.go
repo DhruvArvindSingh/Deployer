@@ -12,6 +12,9 @@ func ServeLatestCLI() http.HandlerFunc {
 		// In a production setup, this would come from a storage bucket or GitHub release.
 		cliPath := "/app/deploynet-cli"
 		
+		// If user agent is curl/wget, we might want to serve a script or just the binary.
+		// Since we want simple 'curl | bash', we serve the binary as requested.
+		
 		file, err := os.Open(cliPath)
 		if err != nil {
 			respondError(w, "CLI binary not found", http.StatusNotFound)
@@ -24,5 +27,49 @@ func ServeLatestCLI() http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/octet-stream")
 
 		io.Copy(w, file)
+	}
+}
+
+func ServeInstallScript() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		script := `#!/bin/bash
+
+# DeployNet CLI Installation Script
+# https://deployer.dsingh.fun
+
+set -e
+
+# Configuration
+BINARY_NAME="deployer"
+INSTALL_DIR="/usr/local/bin"
+DOWNLOAD_URL="https://deployer-be.dsingh.fun/api/cli/latest"
+
+# Colors
+GREEN='\033[0;32m'
+BLUE='\033[1m\033[34m'
+BOLD='\033[1m'
+NC='\033[0m'
+
+echo -e "${BLUE}🚀 Installing DeployNet CLI...${NC}"
+
+# Download binary
+echo -e "Downloading from ${DOWNLOAD_URL}..."
+curl -sL "$DOWNLOAD_URL" -o "$BINARY_NAME"
+chmod +x "$BINARY_NAME"
+
+# Install binary
+if [ -w "$INSTALL_DIR" ]; then
+    mv "$BINARY_NAME" "$INSTALL_DIR/$BINARY_NAME"
+else
+    echo -e "${BLUE}Moving to ${INSTALL_DIR} (requires sudo)...${NC}"
+    sudo mv "$BINARY_NAME" "$INSTALL_DIR/$BINARY_NAME"
+fi
+
+echo -e "\n${GREEN}${BOLD}✓ DeployNet CLI installed successfully!${NC}"
+echo -e "Run ${BOLD}deployer login${NC} to authenticate."
+echo -e "Then run ${BOLD}deployer setup${NC} inside your project to configure CI/CD.\n"
+`
+		w.Header().Set("Content-Type", "text/x-shellscript")
+		w.Write([]byte(script))
 	}
 }
