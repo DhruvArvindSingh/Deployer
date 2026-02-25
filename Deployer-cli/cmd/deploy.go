@@ -165,10 +165,13 @@ func runDeploy(cmd *cobra.Command, args []string) error {
 func detectProjectType() (string, string, error) {
 	// Check for Next.js
 	if _, err := os.Stat("next.config.js"); err == nil {
-		return "Next.js", ".next", nil
+		return "Next.js", "out", nil
 	}
 	if _, err := os.Stat("next.config.ts"); err == nil {
-		return "Next.js", ".next", nil
+		return "Next.js", "out", nil
+	}
+	if _, err := os.Stat("next.config.mjs"); err == nil {
+		return "Next.js", "out", nil
 	}
 	
 	// Check for Vite
