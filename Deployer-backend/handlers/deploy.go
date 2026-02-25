@@ -258,6 +258,25 @@ func RollbackDeployment(db *sql.DB, minioClient *minio.Client, cfg *config.Confi
 		ctx := context.Background()
 		versionPrefix := fmt.Sprintf("_deployments/%s/", deploymentID)
 
+		// Pre-check: verify versioned files exist before wiping root
+		hasVersionedFiles := false
+		preCheckCh := minioClient.ListObjects(ctx, projectName, minio.ListObjectsOptions{
+			Prefix:    versionPrefix,
+			Recursive: true,
+		})
+		for obj := range preCheckCh {
+			if obj.Err == nil && obj.Key != "" {
+				hasVersionedFiles = true
+				// drain the channel
+			}
+		}
+
+		if !hasVersionedFiles {
+			log.Printf("❌ Rollback aborted: no versioned files found under %s", versionPrefix)
+			respondError(w, fmt.Sprintf("Cannot rollback to v%d: no versioned snapshot exists for this deployment (pre-versioning deployment)", deployVersion), http.StatusBadRequest)
+			return
+		}
+
 		// Step 1: Delete all root-level files (not under _deployments/)
 		objectsCh := minioClient.ListObjects(ctx, projectName, minio.ListObjectsOptions{Recursive: true})
 		for obj := range objectsCh {
